@@ -168,6 +168,33 @@ export class NavigationController {
       }
     });
 
+    // Performance Mode Toggle
+    const togglePerfBtn = document.getElementById('toggle-performance-mode');
+    if (togglePerfBtn) {
+      togglePerfBtn.addEventListener('click', () => {
+        togglePerfBtn.blur();
+        const engine = (window as any).app?.engine;
+        if (!engine) return;
+
+        const isPerf = !engine.getPerformanceMode();
+        engine.setPerformanceMode(isPerf);
+
+        // Update button visual state
+        const indicator = togglePerfBtn.querySelector('.status-indicator') as HTMLElement;
+        const text = togglePerfBtn.querySelector('.btn-text');
+        
+        if (isPerf) {
+          togglePerfBtn.classList.add('active-performance');
+          if (indicator) indicator.style.backgroundColor = '#ff0050'; // Magenta active color
+          if (text) text.textContent = 'LOW QUALITY';
+        } else {
+          togglePerfBtn.classList.remove('active-performance');
+          if (indicator) indicator.style.backgroundColor = '#00ff66'; // Green passive color
+          if (text) text.textContent = 'HIGH QUALITY';
+        }
+      });
+    }
+
     // Camera Flight Mode Toggle
     const toggleBtn = document.getElementById('toggle-flight-mode');
     if (toggleBtn) {
@@ -294,12 +321,12 @@ export class NavigationController {
           toggleBtn.classList.remove('active-autopilot');
           toggleBtn.classList.add('active-manual');
           const btnText = toggleBtn.querySelector('.btn-text');
-          if (btnText) btnText.textContent = 'MANUAL FLIGHT';
+          if (btnText) btnText.textContent = 'FREEROAM';
         } else {
           toggleBtn.classList.remove('active-manual');
           toggleBtn.classList.add('active-autopilot');
           const btnText = toggleBtn.querySelector('.btn-text');
-          if (btnText) btnText.textContent = 'AUTO-PILOT';
+          if (btnText) btnText.textContent = 'FIXED';
         }
       }
 
@@ -309,10 +336,10 @@ export class NavigationController {
         const btnText = experienceBtn.querySelector('.btn-text');
         if (state.camera.mode === 'EXPERIENCE') {
           experienceBtn.classList.add('active-experience');
-          if (btnText) btnText.textContent = 'CANCEL EXPERIENCE';
+          if (btnText) btnText.textContent = 'EXIT WORLD';
         } else {
           experienceBtn.classList.remove('active-experience');
-          if (btnText) btnText.textContent = 'EXPERIENCE WORLD';
+          if (btnText) btnText.textContent = 'ENTER WORLD';
         }
       }
 

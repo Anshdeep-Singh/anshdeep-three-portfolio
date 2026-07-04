@@ -16,6 +16,12 @@ export interface PhysicsBody {
 }
 
 export class PhysicsEngine {
+  // Pre-allocated static scratch variables for zero-allocation simulation frames
+  private static readonly scratchV1 = new THREE.Vector3();
+  private static readonly scratchV2 = new THREE.Vector3();
+  private static readonly scratchV3 = new THREE.Vector3();
+  private static readonly scratchV4 = new THREE.Vector3();
+
   private bodies: PhysicsBody[] = [];
   private isGravityWellActive: boolean = false;
   private gravityWellPoint: THREE.Vector3 = new THREE.Vector3();
@@ -135,7 +141,7 @@ export class PhysicsEngine {
       }
 
       // Compute current world home position (since parent might have moved or rotated)
-      const homeWorldPos = new THREE.Vector3();
+      const homeWorldPos = PhysicsEngine.scratchV1;
       if (body.object.parent) {
         // Translate local resting offset back to world coordinates
         body.object.parent.localToWorld(homeWorldPos.copy(body.localOffset));
@@ -144,20 +150,17 @@ export class PhysicsEngine {
       }
 
       // Spring force (Hooke's Law: F = -k * x)
-      const springForce = new THREE.Vector3();
+      const springForce = PhysicsEngine.scratchV2.set(0, 0, 0);
       if (!body.isDisplaced) {
         springForce.subVectors(homeWorldPos, body.position).multiplyScalar(body.springK);
       }
 
-      // Damping force (F = -c * v)
-      const dampingForce = body.velocity.clone().multiplyScalar(-body.damping);
-
-      // Total force
-      const totalForce = new THREE.Vector3().addVectors(springForce, dampingForce);
+      // Damping force (F = -c * v) and Spring force combined into Total force
+      const totalForce = PhysicsEngine.scratchV3.copy(body.velocity).multiplyScalar(-body.damping).add(springForce);
 
       // Gravity Well Force (satisfying magnetic pull)
       if (this.isGravityWellActive) {
-        const wellDir = new THREE.Vector3().subVectors(this.gravityWellPoint, body.position);
+        const wellDir = PhysicsEngine.scratchV4.subVectors(this.gravityWellPoint, body.position);
         const distance = wellDir.length();
         if (distance > 0.01) {
           // Attract with strength inversely proportional to distance, but capped
@@ -180,14 +183,19 @@ export class PhysicsEngine {
       for (let j = i + 1; j < this.bodies.length; j++) {
         const b2 = this.bodies[j];
 
-        const distVec = new THREE.Vector3().subVectors(b1.position, b2.position);
+        const distVec = PhysicsEngine.scratchV1.subVectors(b1.position, b2.position);
         const dist = distVec.length();
         const minDist = b1.radius + b2.radius;
 
         if (dist < minDist) {
           // Overlap detected!
           const overlap = minDist - dist;
-          const collisionNormal = dist > 0.001 ? distVec.clone().normalize() : new THREE.Vector3(1, 0, 0);
+          const collisionNormal = PhysicsEngine.scratchV2;
+          if (dist > 0.001) {
+            collisionNormal.copy(distVec).normalize();
+          } else {
+            collisionNormal.set(1, 0, 0);
+          }
 
           // Push them apart (penetration resolution) proportional to inverse masses
           const totalMass = b1.mass + b2.mass;
@@ -198,7 +206,7 @@ export class PhysicsEngine {
           if (!b2.isDragged) b2.position.addScaledVector(collisionNormal, -push2);
 
           // Calculate relative velocity along collision normal
-          const relVel = new THREE.Vector3().subVectors(b1.velocity, b2.velocity);
+          const relVel = PhysicsEngine.scratchV3.subVectors(b1.velocity, b2.velocity);
           const velAlongNormal = relVel.dot(collisionNormal);
 
           // Only resolve if moving towards each other
@@ -220,7 +228,9 @@ export class PhysicsEngine {
     // 3. Sync positions back to Three.js objects (converting world back to parent's local space)
     for (const body of this.bodies) {
       if (body.object.parent) {
-        const localPos = body.object.parent.worldToLocal(body.position.clone());
+        // reuse scratchV1 for cloning position and local conversion
+        const tempWorldPos = PhysicsEngine.scratchV1.copy(body.position);
+        const localPos = body.object.parent.worldToLocal(tempWorldPos);
         body.object.position.copy(localPos);
       } else {
         body.object.position.copy(body.position);

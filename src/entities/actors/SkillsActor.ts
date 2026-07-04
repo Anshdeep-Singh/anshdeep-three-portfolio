@@ -36,6 +36,19 @@ interface LetterData {
 }
 
 export class SkillsActor extends BaseActor {
+  // Pre-allocated static scratch variables for zero memory allocations in render loop
+  private static readonly scratchV1 = new THREE.Vector3();
+  private static readonly scratchV2 = new THREE.Vector3();
+  private static readonly scratchV3 = new THREE.Vector3();
+  private static readonly scratchV4 = new THREE.Vector3();
+  private static readonly scratchV5 = new THREE.Vector3();
+  private static readonly scratchQ1 = new THREE.Quaternion();
+  private static readonly scratchQ2 = new THREE.Quaternion();
+  private static readonly scratchQ3 = new THREE.Quaternion();
+  private static readonly scratchE1 = new THREE.Euler();
+  private static readonly scratchE2 = new THREE.Euler();
+  private static readonly scratchM1 = new THREE.Matrix4();
+
   private nodes: THREE.Object3D[] = []; // Nucleus is index 0
   
   // Word Satellite Orbits
@@ -610,12 +623,12 @@ export class SkillsActor extends BaseActor {
       // Advance random orbit phase
       letter.orbitPhase += dt * letter.orbitSpeed * this.speedMultiplier.value;
 
-      // Calculate pure orbit position
-      const orbitPos = new THREE.Vector3(letter.orbitRadius, 0, 0);
+      // Calculate pure orbit position (using scratchV1)
+      const orbitPos = SkillsActor.scratchV1.set(letter.orbitRadius, 0, 0);
       orbitPos.applyAxisAngle(letter.orbitAxis, letter.orbitPhase);
       
-      // Calculate pure orbit rotation (wild spinning)
-      const orbitRot = new THREE.Euler(
+      // Calculate pure orbit rotation (wild spinning) (using scratchE1)
+      const orbitRot = SkillsActor.scratchE1.set(
         time * letter.orbitSpeed * 2, 
         time * letter.orbitSpeed * 3, 
         time * letter.orbitSpeed
@@ -626,25 +639,35 @@ export class SkillsActor extends BaseActor {
       const angle = orbit.phase + letter.charOffsetAngle;
 
       const dynamicRadius = orbit.radius * this.orbitRadiusContract.value;
-      const assembledPos = new THREE.Vector3()
+      
+      // Calculate assembledPos (using scratchV2)
+      const assembledPos = SkillsActor.scratchV2
         .copy(orbit.u).multiplyScalar(dynamicRadius * Math.cos(angle))
         .addScaledVector(orbit.v, dynamicRadius * Math.sin(angle));
 
       // Construct orientation: local Z faces radially outward, local X aligns with orbit tangent, local Y matches orbit normal
-      const normal = assembledPos.clone().normalize();
-      const tangent = new THREE.Vector3()
+      // normal (using scratchV3)
+      const normal = SkillsActor.scratchV3.copy(assembledPos).normalize();
+      
+      // tangent (using scratchV4)
+      const tangent = SkillsActor.scratchV4
         .copy(orbit.u).multiplyScalar(-Math.sin(angle))
         .addScaledVector(orbit.v, Math.cos(angle))
         .normalize();
-      const up = new THREE.Vector3().crossVectors(tangent, normal).normalize();
+        
+      // up (using scratchV5)
+      const up = SkillsActor.scratchV5.crossVectors(tangent, normal).normalize();
 
-      const m = new THREE.Matrix4().makeBasis(tangent, up, normal);
-      const assembledRot = new THREE.Quaternion().setFromRotationMatrix(m);
+      const m = SkillsActor.scratchM1.makeBasis(tangent, up, normal);
+      // assembledRot (using scratchQ1)
+      const assembledRot = SkillsActor.scratchQ1.setFromRotationMatrix(m);
 
       // Interpolation logic for sequential showcase
       const progress = this.wordProgresses[letter.wordIndex];
-      const currentPos = new THREE.Vector3();
-      const currentRot = new THREE.Quaternion();
+      
+      // Pre-allocated destinations for results (since currentPos/currentRot will copy values)
+      const currentPos = SkillsActor.scratchV3; // we can repurpose scratchV3 now as we are done with normal
+      const currentRot = SkillsActor.scratchQ2;
       let currentScale = letter.unmergedScale;
 
       const showcaseScale = letter.unmergedScale * 1.35;
@@ -654,13 +677,17 @@ export class SkillsActor extends BaseActor {
       const distFromSphere = isMobile ? 1.7 : 3.1;
       
       // Calculate showcase position in front of the camera, accounting for camera's 0.3 rad Y-rotation offset
-      const showcasePos = new THREE.Vector3(letter.letterCenterX * showcaseScale, 0.0, distFromSphere);
+      // showcasePos (using scratchV4 - we are done with tangent)
+      const showcasePos = SkillsActor.scratchV4.set(letter.letterCenterX * showcaseScale, 0.0, distFromSphere);
       // Rotate by 0.3 rad to align with camera's diagonal angle, then counteract parent rotation
-      showcasePos.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.3);
-      showcasePos.applyAxisAngle(new THREE.Vector3(0, 1, 0), -this.mesh.rotation.y);
+      showcasePos.applyAxisAngle(SkillsActor.scratchV5.set(0, 1, 0), 0.3); // re-use scratchV5
+      showcasePos.applyAxisAngle(SkillsActor.scratchV5.set(0, 1, 0), -this.mesh.rotation.y);
       
       // Rotate text by 0.3 rad to face camera perfectly, then counteract parent rotation
-      const showcaseRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.3 - this.mesh.rotation.y, 0));
+      // showcaseRot (using scratchQ3)
+      const showcaseRot = SkillsActor.scratchQ3.setFromEuler(
+        SkillsActor.scratchE2.set(0, 0.3 - this.mesh.rotation.y, 0)
+      );
 
       if (progress === 0) {
         currentPos.copy(orbitPos);
@@ -671,7 +698,7 @@ export class SkillsActor extends BaseActor {
         const t = progress;
         currentPos.lerpVectors(orbitPos, showcasePos, t);
 
-        const qOrbit = new THREE.Quaternion().setFromEuler(orbitRot);
+        const qOrbit = SkillsActor.scratchQ1.setFromEuler(orbitRot); // re-use scratchQ1
         currentRot.copy(qOrbit).slerp(showcaseRot, t);
 
         currentScale = THREE.MathUtils.lerp(letter.unmergedScale, showcaseScale, t);
@@ -695,7 +722,8 @@ export class SkillsActor extends BaseActor {
       letter.mesh.scale.set(currentScale, currentScale, currentScale);
 
       // Calculate world position to determine depth relative to cylinder center
-      const worldPos = new THREE.Vector3();
+      // worldPos (using scratchV5)
+      const worldPos = SkillsActor.scratchV5;
       letter.mesh.getWorldPosition(worldPos);
 
       // relativeZ is the distance in front of (positive) or behind (negative) the cylinder center

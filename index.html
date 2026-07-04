@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Interactive Portfolio</title>
+  <title>Anshdeep Portfolio</title>
   <style>
     /* Inline CSS to prevent Flash of Unstyled Content (FOUC) */
     body {
@@ -164,16 +164,20 @@
       <!-- Experience World Button -->
       <button id="toggle-experience-mode" class="experience-toggle-btn glass">
         <span class="status-indicator"></span>
-        <span class="btn-text">EXPERIENCE WORLD</span>
+        <span class="btn-text">ENTER WORLD</span>
       </button>
 
       <!-- Flight Control & Radar HUD -->
       <div id="flight-hud" class="flight-hud glass">
         <div class="hud-header">
-          <span class="hud-title">FLIGHT TELEMETRY</span>
+          <span class="hud-title">WORLD MAP</span>
+          <button id="toggle-performance-mode" class="hud-toggle-btn" title="Toggle 60 FPS Performance Mode">
+            <span class="status-indicator" style="background-color: #00ff66;"></span>
+            <span class="btn-text">HIGH QUALITY</span>
+          </button>
           <button id="toggle-flight-mode" class="hud-toggle-btn active-autopilot">
             <span class="status-indicator"></span>
-            <span class="btn-text">AUTO-PILOT</span>
+            <span class="btn-text">FIXED</span>
           </button>
         </div>
         <div class="hud-body">

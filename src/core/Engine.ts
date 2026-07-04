@@ -36,6 +36,13 @@ export class Engine {
   private cssRenderer?: CSS3DRenderer;
   private cssScene?: THREE.Scene;
 
+  // Adaptive & Manual Performance optimization
+  private performanceMode: boolean = false;
+  private fpsHistory: number[] = [];
+  private lastFpsMeasureTime: number = 0;
+  private frameCount: number = 0;
+  private isAutoPerformanceTriggered: boolean = false;
+
   private readonly CORE_ENGINE_STARTED = 'CORE:ENGINE_STARTED';
 
   constructor(
@@ -240,7 +247,11 @@ export class Engine {
   public start(): void {
     if (this.isRunning) return;
     this.isRunning = true;
-    this.lastTime = performance.now();
+    const now = performance.now();
+    this.lastTime = now;
+    this.lastFpsMeasureTime = now;
+    this.frameCount = 0;
+    this.fpsHistory = [];
     this.loop();
   }
 
@@ -255,6 +266,74 @@ export class Engine {
   }
 
   /**
+   * Returns whether Performance Mode is enabled.
+   */
+  public getPerformanceMode(): boolean {
+    return this.performanceMode;
+  }
+
+  /**
+   * Enables or disables Performance Mode (disables post-processing, caps pixel ratio).
+   */
+  public setPerformanceMode(enabled: boolean): void {
+    this.performanceMode = enabled;
+    
+    // Performance optimization: cap pixel ratio to max 1.0 in Performance Mode, 1.5 in High Quality
+    const maxPixelRatio = enabled ? 1.0 : 1.5;
+    const ratio = Math.min(window.devicePixelRatio, maxPixelRatio);
+    
+    if (this.renderer) {
+      this.renderer.setPixelRatio(ratio);
+    }
+    if (this.composer) {
+      this.composer.setPixelRatio(ratio);
+    }
+    
+    console.log(`Engine: Performance Mode changed to ${enabled} (max pixel ratio: ${maxPixelRatio})`);
+  }
+
+  /**
+   * Spawns an elegant side notification toast when Performance Mode is automatically enabled.
+   */
+  private showAutoPerformanceToast(): void {
+    const toastContainer = document.getElementById('toast-container');
+    if (toastContainer) {
+      const toast = document.createElement('div');
+      toast.className = 'hud-toast warning';
+      toast.innerHTML = `
+        <div class="hud-toast-header">
+          <span>SYSTEM UPDATE</span>
+          <span>AUTO</span>
+        </div>
+        <div class="hud-toast-body text-body">
+          Performance mode auto-enabled for smooth play. (Bloom disabled)
+        </div>
+      `;
+      toastContainer.appendChild(toast);
+      
+      // Auto-remove after 5s
+      setTimeout(() => {
+        toast.classList.add('toast-fade-out');
+        setTimeout(() => toast.remove(), 400);
+      }, 5000);
+    }
+
+    // Synchronize UI button if present
+    const btn = document.getElementById('toggle-performance-mode');
+    if (btn) {
+      btn.classList.add('active-performance');
+      const indicator = btn.querySelector('.status-indicator') as HTMLElement;
+      if (indicator) {
+        indicator.style.backgroundColor = '#ff0050';
+      }
+      const text = btn.querySelector('.btn-text');
+      if (text) {
+        text.textContent = 'LOW QUALITY';
+      }
+    }
+  }
+
+  /**
    * The main animation loop.
    */
   private loop = (): void => {
@@ -263,6 +342,29 @@ export class Engine {
     const currentTime = performance.now();
     const dt = (currentTime - this.lastTime) / 1000.0;
     this.lastTime = currentTime;
+
+    // Measure FPS & update Adaptive Performance Logic
+    this.frameCount++;
+    if (currentTime - this.lastFpsMeasureTime >= 1000) {
+      const fps = (this.frameCount * 1000) / (currentTime - this.lastFpsMeasureTime);
+      this.frameCount = 0;
+      this.lastFpsMeasureTime = currentTime;
+
+      this.fpsHistory.push(fps);
+      if (this.fpsHistory.length > 4) {
+        this.fpsHistory.shift();
+      }
+
+      // If FPS is below 45 for 4 consecutive measures, auto-trigger Performance Mode
+      if (this.fpsHistory.length >= 4 && !this.isAutoPerformanceTriggered && !this.performanceMode) {
+        const lowFpsCount = this.fpsHistory.filter(f => f < 45).length;
+        if (lowFpsCount === this.fpsHistory.length) {
+          this.isAutoPerformanceTriggered = true;
+          this.setPerformanceMode(true);
+          this.showAutoPerformanceToast();
+        }
+      }
+    }
 
     // 1. Update Physics
     if (this.physicsEngine && this.camera) {
@@ -292,11 +394,14 @@ export class Engine {
    */
   private render(): void {
     if (!this.renderer || !this.camera || !this.scene) return;
-    if (this.composer) {
+    
+    // Bypass EffectComposer (Bloom) completely in Performance Mode for extremely high speeds!
+    if (this.composer && !this.performanceMode) {
       this.composer.render();
     } else {
       this.renderer.render(this.scene, this.camera);
     }
+    
     if (this.cssRenderer && this.cssScene && this.camera) {
       this.cssRenderer.render(this.cssScene, this.camera);
     }
