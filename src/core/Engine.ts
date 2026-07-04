@@ -96,8 +96,8 @@ export class Engine {
       alpha: true,
       powerPreference: 'high-performance', // performance hint for hybrid GPUs
     });
-    // Performance optimization: cap pixel ratio to max 2 to prevent rendering lag on ultra-high-DPI screens
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Performance optimization: cap pixel ratio to max 1.5 to prevent rendering lag on ultra-high-DPI screens
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     
     // Enable ACES Filmic Tone Mapping to prevent bright light colors (yellow/white) from blowing out
@@ -312,11 +312,11 @@ export class Engine {
     const height = window.innerHeight;
 
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     
     if (this.composer) {
       this.composer.setSize(width, height);
-      this.composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      this.composer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     }
 
     if (this.cssRenderer) {
