@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Portfolio</title>
+  <style>
+    /* Inline CSS to prevent Flash of Unstyled Content (FOUC) */
+    body {
+      margin: 0;
+      background-color: #030712; /* Default background dark-bg to avoid white flashes */
+    }
+    
+    #ui-layer {
+      opacity: 0; /* Keep HUD hidden until styles and scripts are loaded */
+    }
+
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 99999; /* Higher than all overlay and HUD elements */
+      background-color: #030712;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: 'Courier New', Courier, monospace; /* Monospace/Neon styling matches the terminal HUD */
+      color: #00f0ff;
+    }
+
+    .loading-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .loading-content {
+      position: absolute;
+      bottom: 12%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .loading-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 0.3em;
+      color: #00f0ff;
+      text-transform: uppercase;
+      text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+      animation: loading-pulse 2s infinite ease-in-out;
+    }
+
+    .loading-sub {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      color: #9ca3af;
+      text-transform: uppercase;
+    }
+
+    @keyframes loading-pulse {
+      0%, 100% {
+        opacity: 0.5;
+        transform: scale(0.98);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.02);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Static Loading Screen to display immediately on load -->
+  <div id="loading-screen" class="loading-screen">
+    <canvas id="loading-canvas" class="loading-canvas"></canvas>
+    <div class="loading-content">
+      <div class="loading-title">LOADING PORTFOLIO</div>
+      <div class="loading-sub">Please wait</div>
+    </div>
+  </div>
+
+  <div id="app">
+    <!-- Fullscreen temporal glitch overlay -->
+    <div id="temporal-glitch-overlay" class="temporal-glitch-overlay"></div>
+    
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- UI Overlay Layer -->
+    <div id="ui-layer" class="ui-layer">
+      <!-- Dynamic HUD Section Panel -->
+      <div id="section-hud" class="section-hud glass hidden">
+        <div class="hud-header">
+          <span class="hud-title" id="section-hud-title">SYSTEM STATUS</span>
+          <span class="status-indicator"></span>
+        </div>
+        <div class="section-hud-body">
+          <div id="section-hud-desc" class="section-hud-desc">
+            INITIALIZING CORE DATA SYSTEMS...
+          </div>
+          <div class="section-hud-hint-container">
+            <span class="hint-label">SYSTEM HINT:</span>
+            <div id="section-hud-hint" class="section-hud-hint">
+              Select an option from the navigation menu.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navbar Component -->
+      <nav id="navbar" class="navbar" aria-label="Main Navigation">
+        <div class="navbar__logo" id="navbar-logo"></div>
+        <button class="navbar__toggle" id="navbar-toggle" aria-label="Toggle Navigation">
+          <span class="navbar__toggle-bar"></span>
+          <span class="navbar__toggle-bar"></span>
+          <span class="navbar__toggle-bar"></span>
+        </button>
+        <ul class="navbar__menu" id="navbar-menu">
+          <li><button class="navbar__link active" data-target="home">Home</button></li>
+          <li><button class="navbar__link" data-target="projects">Projects</button></li>
+          <li><button class="navbar__link" data-target="skills">Skills</button></li>
+          <li><button class="navbar__link" data-target="about">About</button></li>
+          <li><button class="navbar__link" data-target="resume">Resume</button></li>
+        </ul>
+      </nav>
+
+      <!-- Modal System Component -->
+      <div id="modal-container" class="modal-container hidden" aria-hidden="true" role="dialog">
+        <div class="modal-container__overlay"></div>
+        <div class="modal-container__wrapper">
+          <div class="modal-container__card glass">
+            <button class="modal-container__close" aria-label="Close modal">&times;</button>
+            <div class="modal-container__content">
+              <!-- Dynamic content is injected here by ModalController -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Project Navigation Buttons (Mobile only) -->
+      <div id="project-nav-mobile" class="project-nav-mobile hidden">
+        <button id="project-prev-btn" class="project-nav-btn glass">◀ PREV</button>
+        <button id="project-next-btn" class="project-nav-btn glass">NEXT ▶</button>
+      </div>
+
+      <!-- Go Home Button (Mobile only) -->
+      <button id="go-home-btn" class="go-home-btn glass">
+        <span class="btn-text">GO HOME</span>
+      </button>
+
+      <!-- Experience World Button -->
+      <button id="toggle-experience-mode" class="experience-toggle-btn glass">
+        <span class="status-indicator"></span>
+        <span class="btn-text">EXPERIENCE WORLD</span>
+      </button>
+
+      <!-- Flight Control & Radar HUD -->
+      <div id="flight-hud" class="flight-hud glass">
+        <div class="hud-header">
+          <span class="hud-title">FLIGHT TELEMETRY</span>
+          <button id="toggle-flight-mode" class="hud-toggle-btn active-autopilot">
+            <span class="status-indicator"></span>
+            <span class="btn-text">AUTO-PILOT</span>
+          </button>
+        </div>
+        <div class="hud-body">
+          <div class="radar-container">
+            <svg class="radar-scanner" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="48" class="radar-border" />
+              <circle cx="50" cy="50" r="32" class="radar-grid" />
+              <circle cx="50" cy="50" r="16" class="radar-grid" />
+              <line x1="50" y1="2" x2="50" y2="98" class="radar-grid-line" />
+              <line x1="2" y1="50" x2="98" y2="50" class="radar-grid-line" />
+              <line id="radar-sweep" x1="50" y1="50" x2="50" y2="2" class="radar-sweep-line" />
+              
+              <!-- Target dots -->
+              <circle id="radar-target-projects" cx="50" cy="50" r="3" class="radar-dot target-projects" />
+              <circle id="radar-target-skills" cx="50" cy="50" r="3" class="radar-dot target-skills" />
+              <circle id="radar-target-about" cx="50" cy="50" r="3" class="radar-dot target-about" />
+              <circle id="radar-target-resume" cx="50" cy="50" r="3" class="radar-dot target-resume" />
+              
+              <!-- Center dot (Drone) -->
+              <polygon points="50,46 47,53 53,53" id="radar-drone" class="radar-drone-icon" />
+            </svg>
+          </div>
+          <div class="telemetry-info">
+            <div class="telemetry-row">
+              <span class="label">COORDINATES:</span>
+              <span id="telemetry-coords" class="value">X: 0.00 | Y: 0.00 | Z: 5.00</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="label">HEADING:</span>
+              <span id="telemetry-heading" class="value">000° (N)</span>
+            </div>
+            <div class="telemetry-row">
+              <span class="label">NEAREST:</span>
+              <span id="telemetry-nearest" class="value">NONE</span>
+            </div>
+            <div class="controls-hint" id="flight-controls-hint">
+              <span class="hint-title">MANUAL CONTROLS:</span>
+              <span class="hint-keys">WASD/Arrows - Move | Click+Drag - Look | Space/Shift - Up/Down</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HUD Feed Toast Notification Container -->
+      <div id="toast-container" class="toast-container"></div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

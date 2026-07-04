@@ -1,0 +1,1018 @@
+/* Mobile Joystick and Character Controls Styles */
+
+.mobile-controls-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Let touches pass through except on buttons/joystick */
+  z-index: 9999; /* Overlay on top of HUD but below loading screen */
+  display: none; /* Only displayed when EXPERIENCE mode is active and on touch devices */
+}
+
+/* Joystick Container */
+.mobile-joystick-container {
+  position: absolute;
+  bottom: 85px;
+  left: 40px;
+  width: 120px;
+  height: 120px;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.mobile-joystick-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Action Buttons Container */
+.mobile-action-buttons {
+  position: absolute;
+  bottom: 85px;
+  right: 40px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+/* Button style */
+.mobile-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(12, 15, 29, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobile-btn:active {
+  transform: scale(0.9);
+}
+
+.mobile-btn-sub {
+  font-size: 7px;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+/* Jump Button - Cyber Cyan */
+.mobile-btn.btn-jump {
+  border: 2px solid #00f0ff;
+  color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3), inset 0 0 5px rgba(0, 240, 255, 0.2);
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.6);
+}
+
+.mobile-btn.btn-jump:active {
+  background: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 18px #00f0ff, inset 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+/* Boost Button - Neon Magenta */
+.mobile-btn.btn-boost {
+  border: 2px solid #ff007f;
+  color: #ff007f;
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.3), inset 0 0 5px rgba(255, 0, 127, 0.2);
+  text-shadow: 0 0 5px rgba(255, 0, 127, 0.6);
+}
+
+.mobile-btn.btn-boost:active {
+  background: rgba(255, 0, 127, 0.2);
+  box-shadow: 0 0 18px #ff007f, inset 0 0 10px rgba(255, 0, 127, 0.4);
+}
+
+/* Media Query to show/hide based on touch capability or experience state */
+@media (max-width: 1024px) {
+  /* Show controls for tablets and mobile when active */
+  .mobile-controls-layer.active {
+    display: block;
+  }
+  .snake-keyboard-hint {
+    display: none !important;
+  }
+}
+
+/* Hide standard controls and cancel experience during active Snake game, Tetris game, or Driving game */
+body.snake-game-active #toggle-experience-mode,
+body.snake-game-active #mobile-controls-layer,
+body.tetris-game-active #toggle-experience-mode,
+body.tetris-game-active #mobile-controls-layer,
+body.driving-game-active #toggle-experience-mode,
+body.driving-game-active #mobile-controls-layer,
+body.rubiks-game-active #toggle-experience-mode,
+body.rubiks-game-active #mobile-controls-layer,
+body.connect4-game-active #toggle-experience-mode,
+body.connect4-game-active #mobile-controls-layer {
+  display: none !important;
+}
+
+/* Neon Cyber D-Pad for Snake Game */
+.snake-dpad-container {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 180px;
+  display: grid;
+  grid-template-areas: 
+    ". up ."
+    "left . right"
+    ". down .";
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 10px;
+  pointer-events: auto;
+  z-index: 99999;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+/* Hide Snake dpad on desktop */
+@media (min-width: 1025px) {
+  .snake-dpad-container {
+    display: none !important;
+  }
+}
+
+.snake-dpad-btn {
+  background: rgba(12, 15, 29, 0.7);
+  border: 2px solid #39ff14;
+  border-radius: 12px;
+  color: #39ff14;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.2), inset 0 0 5px rgba(57, 255, 20, 0.1);
+  text-shadow: 0 0 8px rgba(57, 255, 20, 0.6);
+  transition: all 0.1s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.snake-dpad-btn:active, .snake-dpad-btn.active {
+  transform: scale(0.92);
+  background: rgba(57, 255, 20, 0.25);
+  box-shadow: 0 0 20px #39ff14, inset 0 0 10px rgba(57, 255, 20, 0.5);
+  text-shadow: 0 0 12px #39ff14;
+}
+
+.snake-dpad-up {
+  grid-area: up;
+}
+
+.snake-dpad-down {
+  grid-area: down;
+}
+
+.snake-dpad-left {
+  grid-area: left;
+}
+
+.snake-dpad-right {
+  grid-area: right;
+}
+
+/* Animations and adjustments for landscape orientation on small/mobile devices */
+@media (min-aspect-ratio: 1/1) and (max-height: 500px) {
+  .snake-dpad-container {
+    bottom: 2%;
+    width: 140px;
+    height: 140px;
+    gap: 6px;
+  }
+}
+
+/* Neon Cyber Gamepad for Tetris */
+.tetris-gamepad-container {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 99999;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.tetris-pad-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.tetris-pad-btn {
+  flex: 1;
+  background: rgba(12, 15, 29, 0.75);
+  border: 2px solid #ff007f; /* Neon Magenta theme */
+  border-radius: 12px;
+  color: #ff007f;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.2), inset 0 0 5px rgba(255, 0, 127, 0.1);
+  text-shadow: 0 0 8px rgba(255, 0, 127, 0.6);
+  transition: all 0.1s ease;
+}
+
+.tetris-pad-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 0, 127, 0.25);
+  box-shadow: 0 0 18px #ff007f, inset 0 0 8px rgba(255, 0, 127, 0.5);
+  text-shadow: 0 0 12px #ff007f;
+}
+
+.tetris-pad-btn.long-btn {
+  font-size: 0.75rem;
+  border-color: #00f0ff; /* Cyan theme for drop buttons */
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2), inset 0 0 5px rgba(0, 240, 255, 0.1);
+}
+
+.tetris-pad-btn.long-btn:active {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 18px #00f0ff, inset 0 0 8px rgba(0, 240, 255, 0.5);
+  text-shadow: 0 0 12px #00f0ff;
+}
+
+/* Hide Tetris gamepad on landscape desktop */
+@media (min-width: 1025px) {
+  .tetris-gamepad-container {
+    display: none !important;
+  }
+}
+
+@media (min-aspect-ratio: 1/1) and (max-height: 500px) {
+  .tetris-gamepad-container {
+    bottom: 2%;
+    max-width: 280px;
+    gap: 4px;
+  }
+  .tetris-pad-btn {
+    height: 38px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+  .tetris-pad-btn.long-btn {
+    font-size: 0.65rem;
+  }
+}
+
+/* Neon Cyber Driving Gamepad Overlay */
+.driving-gamepad-container {
+  position: fixed;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 40px;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 99999;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.driving-steering-container {
+  display: flex;
+  gap: 15px;
+  pointer-events: auto;
+}
+
+.driving-pedals-container {
+  display: flex;
+  gap: 15px;
+  pointer-events: auto;
+}
+
+/* Styling for driving buttons */
+.driving-btn {
+  background: rgba(12, 15, 29, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Steering Arrows - Cyber Cyan */
+.steering-btn {
+  width: 75px;
+  height: 75px;
+  border: 2px solid #00f0ff;
+  color: #00f0ff;
+  font-size: 1.8rem;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2), inset 0 0 5px rgba(0, 240, 255, 0.1);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+.steering-btn:active, .steering-btn.active {
+  transform: scale(0.9);
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 18px #00f0ff, inset 0 0 8px rgba(0, 240, 255, 0.5);
+  text-shadow: 0 0 12px #00f0ff;
+}
+
+/* Pedals - Gas is green, Brake is red */
+.pedal-btn {
+  width: 85px;
+  height: 95px;
+}
+
+.pedal-label {
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+}
+
+.pedal-sub {
+  font-size: 0.6rem;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.pedals-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stacked-pedal-btn {
+  width: 95px;
+  height: 44px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stacked-pedal-btn .pedal-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.btn-gas {
+  border: 2px solid #39ff14;
+  color: #39ff14;
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.2), inset 0 0 5px rgba(57, 255, 20, 0.1);
+  text-shadow: 0 0 8px rgba(57, 255, 20, 0.6);
+}
+
+.btn-gas:active, .btn-gas.active {
+  transform: scale(0.9);
+  background: rgba(57, 255, 20, 0.25);
+  box-shadow: 0 0 18px #39ff14, inset 0 0 8px rgba(57, 255, 20, 0.5);
+  text-shadow: 0 0 12px #39ff14;
+}
+
+.btn-reverse {
+  border: 2px solid #ffaa00;
+  color: #ffaa00;
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.2), inset 0 0 5px rgba(255, 170, 0, 0.1);
+  text-shadow: 0 0 8px rgba(255, 170, 0, 0.6);
+}
+
+.btn-reverse:active, .btn-reverse.active {
+  transform: scale(0.95);
+  background: rgba(255, 170, 0, 0.25);
+  box-shadow: 0 0 18px #ffaa00, inset 0 0 8px rgba(255, 170, 0, 0.5);
+  text-shadow: 0 0 12px #ffaa00;
+}
+
+.btn-brake, .btn-handbrake {
+  border: 2px solid #ff3333;
+  color: #ff3333;
+  box-shadow: 0 0 10px rgba(255, 51, 51, 0.2), inset 0 0 5px rgba(255, 51, 51, 0.1);
+  text-shadow: 0 0 8px rgba(255, 51, 51, 0.6);
+}
+
+.btn-brake:active, .btn-brake.active,
+.btn-handbrake:active, .btn-handbrake.active {
+  transform: scale(0.9);
+  background: rgba(255, 51, 51, 0.25);
+  box-shadow: 0 0 18px #ff3333, inset 0 0 8px rgba(255, 51, 51, 0.5);
+  text-shadow: 0 0 12px #ff3333;
+}
+
+/* Hide driving gamepad on desktop */
+@media (min-width: 1025px) {
+  .driving-gamepad-container {
+    display: none !important;
+  }
+}
+
+/* Mobile responsive scaling */
+@media (max-width: 768px) {
+  .driving-gamepad-container {
+    bottom: 20px;
+    padding: 0 15px;
+  }
+  .steering-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 1.4rem;
+    border-radius: 8px;
+  }
+  .pedal-btn {
+    width: 70px;
+    height: 80px;
+    border-radius: 8px;
+  }
+  .pedal-label {
+    font-size: 0.8rem;
+  }
+  .pedal-sub {
+    font-size: 0.5rem;
+    margin-top: 2px;
+  }
+  .pedals-stacked {
+    gap: 6px;
+  }
+  .stacked-pedal-btn {
+    width: 80px;
+    height: 37px;
+    border-radius: 6px;
+  }
+  .stacked-pedal-btn .pedal-label {
+    font-size: 0.7rem;
+  }
+}
+
+@media (min-aspect-ratio: 1/1) and (max-height: 500px) {
+  .driving-gamepad-container {
+    bottom: 10px;
+    padding: 0 20px;
+  }
+  .steering-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+  }
+  .pedal-btn {
+    width: 60px;
+    height: 65px;
+    border-radius: 8px;
+  }
+  .pedal-label {
+    font-size: 0.75rem;
+  }
+  .pedal-sub {
+    display: none;
+  }
+  .pedals-stacked {
+    gap: 4px;
+  }
+  .stacked-pedal-btn {
+    width: 70px;
+    height: 30px;
+    border-radius: 6px;
+  }
+  .stacked-pedal-btn .pedal-label {
+    font-size: 0.65rem;
+  }
+}
+
+/* Neon Cyber Rubik's Cube Gamepad Overlay */
+.rubiks-gamepad-container {
+  position: absolute;
+  bottom: 3%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 380px;
+  background: rgba(12, 15, 29, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.1), inset 0 0 10px rgba(0, 240, 255, 0.05);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: auto;
+  z-index: 99999;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  box-sizing: border-box;
+}
+
+.rubiks-gamepad-title {
+  color: #00f0ff;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  margin-bottom: 2px;
+}
+
+.rubiks-selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rubiks-selector-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.65rem;
+  font-weight: bold;
+  color: #ff007f; /* Cyber Pink Label */
+  text-shadow: 0 0 5px rgba(255, 0, 127, 0.4);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-left: 2px;
+}
+
+.rubiks-btn-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.rubiks-pad-btn {
+  flex: 1;
+  background: rgba(20, 24, 46, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 6px;
+  color: #00f0ff;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  font-weight: 900;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: inset 0 0 4px rgba(0, 240, 255, 0.1);
+  text-shadow: 0 0 4px rgba(0, 240, 255, 0.5);
+}
+
+.rubiks-pad-btn:active {
+  transform: scale(0.95);
+  background: rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4), inset 0 0 6px rgba(0, 240, 255, 0.2);
+}
+
+.rubiks-pad-btn.active {
+  background: rgba(255, 0, 127, 0.2);
+  border-color: #ff007f;
+  color: #ff007f;
+  text-shadow: 0 0 8px #ff007f;
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.3), inset 0 0 4px rgba(255, 0, 127, 0.15);
+}
+
+/* Big Action Button */
+.rubiks-execute-btn {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.8), rgba(0, 70, 173, 0.8));
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.15s ease;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+.rubiks-execute-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 0 20px #00f0ff;
+  background: linear-gradient(135deg, #00f0ff, #0046ad);
+}
+
+/* Drag mode toggle styles */
+.rubiks-drag-toggle-container {
+  display: flex;
+  border: 1px solid rgba(255, 0, 127, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.rubiks-drag-btn {
+  flex: 1;
+  background: rgba(12, 15, 29, 0.6);
+  color: rgba(255, 0, 127, 0.6);
+  border: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.7rem;
+  font-weight: bold;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rubiks-drag-btn.active {
+  background: rgba(255, 0, 127, 0.25);
+  color: #ff007f;
+  text-shadow: 0 0 6px #ff007f;
+  box-shadow: inset 0 0 6px rgba(255, 0, 127, 0.2);
+}
+
+/* Cyber Gimbal Trackpad Styles */
+.rubiks-gimbal-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.rubiks-gimbal-settings.hidden {
+  display: none !important;
+}
+
+.rubiks-standard-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.rubiks-standard-settings.hidden {
+  display: none !important;
+}
+
+.rubiks-gimbal-trackpad {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 4px auto 0 auto;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(12, 15, 29, 0.4) 30%, rgba(0, 240, 255, 0.05) 100%);
+  border: 1px dashed rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.1), inset 0 0 10px rgba(0, 240, 255, 0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.rubiks-gimbal-trackpad:active {
+  cursor: grabbing;
+}
+
+.rubiks-gimbal-ring {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 240, 255, 0.45);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* Radar concentric sweeping effect */
+.rubiks-gimbal-radar {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(0, 240, 255, 0.12) 0deg, rgba(0, 240, 255, 0) 180deg);
+  animation: rubiks-gimbal-sweep 3s linear infinite;
+}
+
+.rubiks-gimbal-knob {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff33aa 0%, #cc0066 80%);
+  border: 2px solid #ff007f;
+  box-shadow: 0 0 12px #ff007f, inset 0 0 5px rgba(255, 255, 255, 0.6);
+  z-index: 2;
+  pointer-events: none;
+  will-change: transform;
+}
+
+@keyframes rubiks-gimbal-sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Hide on non-mobile desktop screens */
+@media (min-width: 1025px) {
+  .rubiks-gamepad-container {
+    display: none !important;
+  }
+}
+
+@media (min-aspect-ratio: 1/1) and (max-height: 500px) {
+  .rubiks-gimbal-trackpad {
+    width: 90px;
+    height: 90px;
+  }
+  .rubiks-gimbal-ring {
+    width: 76px;
+    height: 76px;
+  }
+  .rubiks-gimbal-knob {
+    width: 24px;
+    height: 24px;
+  }
+  .rubiks-gamepad-container {
+    bottom: 2%;
+    max-width: 300px;
+    padding: 6px 8px;
+    gap: 4px;
+    border-radius: 12px;
+  }
+  .rubiks-gamepad-title {
+    font-size: 0.65rem;
+    margin-bottom: 0px;
+  }
+  .rubiks-selector-label {
+    font-size: 0.55rem;
+  }
+  .rubiks-btn-row {
+    gap: 4px;
+  }
+  .rubiks-pad-btn {
+    height: 24px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+  }
+  .rubiks-execute-btn {
+    height: 28px;
+    font-size: 0.7rem;
+  }
+  .rubiks-drag-btn {
+    height: 22px;
+    font-size: 0.6rem;
+  }
+}
+
+/* Neon Cyber Connect 4 Gamepad Overlay */
+.connect4-gamepad-container {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(400px, 92vw);
+  background: rgba(12, 15, 29, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 9999;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), inset 0 0 10px rgba(0, 240, 255, 0.05);
+}
+
+.connect4-gamepad-title {
+  color: #00f0ff;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  font-size: 0.75rem;
+  text-align: center;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.connect4-btn-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.connect4-pad-btn {
+  height: 40px;
+  background: rgba(12, 15, 29, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: #00f0ff;
+  border-radius: 8px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.15s ease;
+  box-shadow: 0 0 5px rgba(0, 240, 255, 0.05);
+}
+
+.connect4-pad-btn:active {
+  transform: scale(0.9);
+  background: rgba(0, 240, 255, 0.2);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.connect4-pad-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Hide on desktop landscape where sidebar HUD is used */
+@media (min-width: 1025px) {
+  .connect4-gamepad-container {
+    display: none !important;
+  }
+}
+
+/* Hide current hover indicator, tips, columns selector, and drop button on mobile devices / portrait layouts */
+@media (max-width: 1024px) {
+  .connect4-current-hover,
+  .connect4-tips,
+  .connect4-col-selector-container,
+  .connect4-drop-btn-class {
+    display: none !important;
+  }
+}
+
+/* Neon Cyber Voxel Painter Toolbar Overlay */
+.voxel-gamepad-container {
+  position: fixed;
+  bottom: 85px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(340px, 92vw);
+  background: rgba(12, 15, 29, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+  z-index: 9999;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), inset 0 0 10px rgba(0, 240, 255, 0.05);
+}
+
+.voxel-gamepad-title {
+  color: #00f0ff;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 900;
+  font-size: 0.7rem;
+  text-align: center;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.voxel-btn-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+
+.voxel-pad-btn {
+  height: 38px;
+  background: rgba(12, 15, 29, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.voxel-pad-btn .voxel-sub {
+  font-size: 0.55rem;
+  opacity: 0.6;
+  margin-top: 1px;
+}
+
+.voxel-pad-btn:active {
+  transform: scale(0.95);
+}
+
+.voxel-pad-btn.active[data-mode="add"] {
+  border-color: #00f0ff;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3), inset 0 0 5px rgba(0, 240, 255, 0.1);
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
+}
+
+.voxel-pad-btn.active[data-mode="remove"] {
+  border-color: #ff007f;
+  color: #ff007f;
+  background: rgba(255, 0, 127, 0.15);
+  box-shadow: 0 0 10px rgba(255, 0, 127, 0.3), inset 0 0 5px rgba(255, 0, 127, 0.1);
+  text-shadow: 0 0 5px rgba(255, 0, 127, 0.5);
+}
+
+.voxel-pad-btn.active[data-mode="color"] {
+  border-color: #ffca00;
+  color: #ffca00;
+  background: rgba(255, 202, 0, 0.15);
+  box-shadow: 0 0 10px rgba(255, 202, 0, 0.3), inset 0 0 5px rgba(255, 202, 0, 0.1);
+  text-shadow: 0 0 5px rgba(255, 202, 0, 0.5);
+}
+
+/* Hide on desktop, show only on touch screens / mobile */
+@media (min-width: 1025px) {
+  .voxel-gamepad-container {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Hide the hint label inside the HUD during voxel painter on mobile view */
+  body.voxel-painter-active .section-hud-hint-container .hint-label {
+    display: none !important;
+  }
+
+  body.voxel-painter-active .section-hud-hint-container {
+    border-top: none !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  /* Make sure HUD on mobile fits the voxel controls beautifully */
+  body.voxel-painter-active #section-hud {
+    padding: 8px 12px !important;
+  }
+}

@@ -1,0 +1,99 @@
+/* Feed toast styling placeholder */
+.toast-container {
+  position: fixed;
+  top: 90px;
+  right: var(--spacing-sm);
+  z-index: var(--z-navbar);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  pointer-events: none;
+}
+
+.hud-toast {
+  background: rgba(12, 15, 29, 0.85);
+  border-left: 3px solid var(--color-secondary);
+  border-top: 1px solid rgba(255, 0, 127, 0.3);
+  border-right: 1px solid rgba(255, 0, 127, 0.1);
+  border-bottom: 1px solid rgba(255, 0, 127, 0.1);
+  color: #fff;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.75rem;
+  padding: 10px 14px;
+  border-radius: 0 8px 8px 0;
+  width: 280px;
+  box-shadow: 0 4px 15px rgba(255, 0, 127, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: toast-slide-in 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+.hud-toast.warning {
+  border-left-color: #ffaa00;
+  box-shadow: 0 4px 15px rgba(255, 170, 0, 0.2);
+  border-top-color: rgba(255, 170, 0, 0.3);
+}
+
+.hud-toast.success {
+  border-left-color: #00ff66;
+  box-shadow: 0 4px 15px rgba(0, 255, 102, 0.2);
+  border-top-color: rgba(0, 255, 102, 0.3);
+}
+
+.hud-toast-header {
+  font-size: 0.6rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.hud-toast-body {
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.hud-toast.toast-fade-out {
+  animation: toast-fade-out 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+}
+
+@keyframes toast-fade-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+.toast-glitch-text {
+  animation: text-glitch-anim 2.5s infinite;
+}
+
+@keyframes text-glitch-anim {
+  0% { text-shadow: none; }
+  92% { text-shadow: none; }
+  93% { text-shadow: 1px 0 0 red, -1px 0 0 blue; }
+  94% { text-shadow: none; }
+  96% { text-shadow: -1.5px 0.5px 0 #00ffaa, 1.5px -0.5px 0 #ff007f; }
+  98% { text-shadow: none; }
+}

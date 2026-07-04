@@ -1,0 +1,347 @@
+/* Base Layout, Reset, and Interface Styles */
+@import './variables.css';
+@import './tokens.css';
+@import './hud.css';
+@import './mobile-controls.css';
+@import './toast.css';
+@import './loading.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-main);
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#webgl-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-canvas);
+}
+
+/* UI Layer Overlay */
+.ui-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-ui-layer);
+  pointer-events: none; /* Let events pass to canvas except for interactive elements */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Interactive elements in UI layer should capture pointer events */
+.navbar, .modal-container__card, .interactive-btn {
+  pointer-events: auto;
+}
+
+/* Navigation Menu */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: var(--z-navbar);
+  background: linear-gradient(to bottom, rgba(12, 15, 29, 0.8) 0%, rgba(12, 15, 29, 0) 100%);
+  transition: transform var(--transition-normal);
+}
+
+.navbar--hidden {
+  transform: translateY(-100%);
+}
+
+.navbar__logo {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  cursor: pointer;
+  /* Glowing boundary */
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(12, 15, 29, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.navbar__menu {
+  display: flex;
+  gap: var(--spacing-sm);
+  list-style: none;
+}
+
+.navbar__link {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+  position: relative;
+  transition: color var(--transition-fast);
+  border-radius: 4px;
+}
+
+.navbar__link:hover {
+  color: var(--color-primary);
+}
+
+.navbar__link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+  transition: width var(--transition-normal);
+}
+
+.navbar__link:hover::after,
+.navbar__link.active::after {
+  width: calc(100% - var(--spacing-sm) * 2);
+}
+
+.navbar__link.active {
+  color: var(--color-primary);
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+/* Navbar Hamburg Toggle */
+.navbar__toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: calc(var(--z-navbar) + 1);
+}
+
+.navbar__toggle-bar {
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-text);
+  border-radius: 1px;
+  transition: transform var(--transition-normal), opacity var(--transition-normal), background-color var(--transition-normal);
+}
+
+.navbar__toggle:hover .navbar__toggle-bar {
+  background-color: var(--color-primary);
+}
+
+.navbar__toggle.active .navbar__toggle-bar:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+  background-color: var(--color-primary);
+}
+
+.navbar__toggle.active .navbar__toggle-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.navbar__toggle.active .navbar__toggle-bar:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+  background-color: var(--color-primary);
+}
+
+/* Modal System */
+.modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-normal), visibility var(--transition-normal);
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-container.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.modal-container__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(6, 8, 16, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-container__wrapper {
+  position: relative;
+  width: 90%;
+  max-width: 650px;
+  max-height: 80vh;
+  z-index: 2;
+  transform: scale(1);
+  transition: transform var(--transition-slow);
+}
+
+.modal-container.hidden .modal-container__wrapper {
+  transform: scale(0.9);
+}
+
+.modal-container__card {
+  padding: var(--spacing-lg);
+  border-radius: 12px;
+  overflow-y: auto;
+  max-height: 80vh;
+  position: relative;
+}
+
+.modal-container__close {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.modal-container__close:hover {
+  color: var(--color-secondary);
+  transform: rotate(90deg);
+}
+
+.modal-container__content {
+  margin-top: var(--spacing-sm);
+}
+
+/* Responsive Scaling */
+@media (max-width: 768px) {
+  .navbar {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(12, 15, 29, 0.95);
+    backdrop-filter: blur(var(--blur-strength));
+    border-bottom: 1px solid var(--color-border-glass);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .navbar__toggle {
+    display: flex;
+  }
+  
+  .navbar__menu {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(12, 15, 29, 0.95);
+    backdrop-filter: blur(var(--blur-strength));
+    border-bottom: 1px solid var(--color-border-glass);
+    padding: var(--spacing-sm) 0;
+    gap: 0;
+    transform: translateY(-10px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform var(--transition-normal), opacity var(--transition-normal), visibility var(--transition-normal);
+  }
+  
+  .navbar__menu.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  
+  .navbar__link {
+    width: 100%;
+    text-align: center;
+    padding: var(--spacing-sm);
+    font-size: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .navbar__link:last-child {
+    border-bottom: none;
+  }
+  
+  .navbar__link::after {
+    display: none; /* Hide standard underline on mobile */
+  }
+  
+  .navbar__link.active {
+    background: rgba(0, 240, 255, 0.1);
+    border-left: 4px solid var(--color-primary);
+    border-right: 4px solid var(--color-primary);
+  }
+
+  /* Mobile modal adjustments */
+  .modal-container__wrapper {
+    width: 95% !important;
+    max-height: 85vh !important;
+  }
+
+  .modal-container__card {
+    padding: 16px !important;
+    max-height: 85vh !important;
+  }
+
+  .modal-container__content .text-h2 {
+    font-size: 1.35rem !important;
+    margin-right: 24px; /* Prevent text overlapping close button */
+  }
+
+  /* Collapse 2-column grids into a single-column layout on mobile */
+  .modal-container__content div[style*="display: grid"],
+  .modal-container__content div[style*="display:grid"] {
+    grid-template-columns: 1fr !important;
+    gap: var(--spacing-sm) !important;
+  }
+}
