@@ -819,11 +819,11 @@ export class CameraSystem {
 
         // Position camera behind the car
         const distance = isNarrow ? 5.2 : 4.8;
-        const height = isNarrow ? 0.8 : 0.5;
+        const height = isNarrow ? 1.4 : 1.1;
 
         // Smoothly transition camera yaw and pitch back to behind the car when not dragging (just like the robot)
         if (!this.isDragging) {
-          const defaultPitch = isNarrow ? 0.08 : 0.04;
+          const defaultPitch = isNarrow ? 0.24 : 0.20;
           this.pitch += (defaultPitch - this.pitch) * 0.05;
 
           // Target yaw is the backview of the car (carYaw is the facing direction, so + Math.PI is behind it)

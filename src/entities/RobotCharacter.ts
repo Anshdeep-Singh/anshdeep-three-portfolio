@@ -205,12 +205,8 @@ export class RobotCharacter {
    * Resets and triggers the Jump animation instantly.
    */
   public triggerJump(): void {
-    const jumpAction = this.actions['Jump'];
-    if (jumpAction) {
-      jumpAction.reset();
-      jumpAction.play();
-      this.activeAction = jumpAction;
-      this.activeActionName = 'Jump';
+    if (this.actions['Jump']) {
+      this.fadeToAction('Jump', 0.15);
     }
   }
 }

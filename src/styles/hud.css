@@ -529,7 +529,7 @@
 
   /* Compact HUD for active games on mobile */
   #section-hud.tetris-active-hud {
-    top: 65px !important;
+    top: 15px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: calc(100% - 24px) !important;
@@ -1329,7 +1329,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 @media (max-width: 768px) {
   .experience-mode-active #section-hud.tetris-active-hud {
     transform: translateX(-50%) !important;
-    top: 65px !important;
+    top: 15px !important;
   }
 }
 
