@@ -50,15 +50,6 @@ export class SnakeGameActor extends BaseActor {
     scale: number;
     isTailShrinking?: boolean;
   }[] = [];
-  private shrinkingSegments: {
-    mesh: THREE.Mesh;
-    prevX: number;
-    prevY: number;
-    targetX: number;
-    targetY: number;
-    scale: number;
-    isTailShrinking?: boolean;
-  }[] = [];
 
   // Visual Groups
   private gridMesh!: THREE.LineSegments;
@@ -314,18 +305,11 @@ export class SnakeGameActor extends BaseActor {
       });
     });
 
-    // Clean up existing active and shrinking segments
+    // Clean up existing active segments
     this.visualSegments.forEach(seg => {
       this.snakeGroup.remove(seg.mesh);
     });
-    this.shrinkingSegments.forEach(seg => {
-      this.snakeGroup.remove(seg.mesh);
-      if (seg.mesh.material && !(seg.mesh.material instanceof Array)) {
-        seg.mesh.material.dispose();
-      }
-    });
     this.visualSegments = [];
-    this.shrinkingSegments = [];
 
     while (this.snakeGroup.children.length > 0) {
       this.snakeGroup.remove(this.snakeGroup.children[0]);
@@ -582,20 +566,6 @@ export class SnakeGameActor extends BaseActor {
       seg.mesh.scale.set(currentScale, currentScale, currentScale);
     });
 
-    // Smoothly position and shrink departing tail segments
-    this.shrinkingSegments.forEach((seg) => {
-      const sxPrev = - (this.gridWidth * this.cellSize) / 2 + seg.prevX * this.cellSize + this.cellSize / 2;
-      const szPrev = - (this.gridHeight * this.cellSize) / 2 + seg.prevY * this.cellSize + this.cellSize / 2;
-      const sxTarget = - (this.gridWidth * this.cellSize) / 2 + seg.targetX * this.cellSize + this.cellSize / 2;
-      const szTarget = - (this.gridHeight * this.cellSize) / 2 + seg.targetY * this.cellSize + this.cellSize / 2;
-
-      const sx = sxPrev + (sxTarget - sxPrev) * t;
-      const sz = szPrev + (szTarget - szPrev) * t;
-      seg.mesh.position.set(sx, 0.08, sz);
-
-      const currentScale = Math.max(0, 1.0 - t);
-      seg.mesh.scale.set(currentScale, currentScale, currentScale);
-    });
 
     // Gentle pulse animation for food so it looks amazing
     if (this.foodMesh) {
@@ -624,15 +594,6 @@ export class SnakeGameActor extends BaseActor {
   }
 
   private tick(): void {
-    // Clean up finished shrinking segments from the PREVIOUS tick cycle
-    this.shrinkingSegments.forEach(seg => {
-      this.snakeGroup.remove(seg.mesh);
-      if (seg.mesh.material && !(seg.mesh.material instanceof Array)) {
-        seg.mesh.material.dispose();
-      }
-    });
-    this.shrinkingSegments = [];
-
     this.direction = this.nextDirection;
 
     // Head's next coordinate
@@ -793,90 +754,76 @@ export class SnakeGameActor extends BaseActor {
       this.snakeMaterials.pop(); // Note: we let the shrinking segments handle disposal of their mesh/material
     }
 
-    // Synchronize visual segments for interpolation
-    if (ateSomething) {
-      // Shift target positions for all existing segments
-      for (let i = this.visualSegments.length - 1; i > 0; i--) {
-        const seg = this.visualSegments[i];
-        const prevSeg = this.visualSegments[i - 1];
-        seg.prevX = seg.targetX;
-        seg.prevY = seg.targetY;
-        seg.targetX = prevSeg.targetX;
-        seg.targetY = prevSeg.targetY;
-        seg.scale = 1.0;
-      }
-      if (this.visualSegments.length > 0) {
-        const oldHeadSeg = this.visualSegments[0];
-        oldHeadSeg.prevX = oldHeadSeg.targetX;
-        oldHeadSeg.prevY = oldHeadSeg.targetY;
-        oldHeadSeg.scale = 1.0;
-        // Remove eyes from the old head mesh so only the active head has eyes
-        while (oldHeadSeg.mesh.children.length > 0) {
-          oldHeadSeg.mesh.remove(oldHeadSeg.mesh.children[0]);
-        }
-      }
-
-      // Add new head segment
-      const newHeadMesh = new THREE.Mesh(this.segmentGeo, newHeadMat);
-      this.addEyesToHead(newHeadMesh);
-      this.snakeGroup.add(newHeadMesh);
-      this.visualSegments.unshift({
-        mesh: newHeadMesh,
-        prevX: head.x,
-        prevY: head.y,
-        targetX: newHead.x,
-        targetY: newHead.y,
-        scale: 1.0 // Make head size static (no pulsing scale animation)
-      });
-    } else {
-      // Pop the tail segment from the active list and make it a shrinking segment
+    // Ensure visualSegments length perfectly matches snakeCoords length
+    while (this.visualSegments.length > this.snakeCoords.length) {
       const departingTail = this.visualSegments.pop();
       if (departingTail) {
-        departingTail.isTailShrinking = true;
-        this.shrinkingSegments.push(departingTail);
-      }
-
-      // Shift target positions for all remaining segments
-      for (let i = this.visualSegments.length - 1; i > 0; i--) {
-        const seg = this.visualSegments[i];
-        const prevSeg = this.visualSegments[i - 1];
-        seg.prevX = seg.targetX;
-        seg.prevY = seg.targetY;
-        seg.targetX = prevSeg.targetX;
-        seg.targetY = prevSeg.targetY;
-        seg.scale = 1.0;
-      }
-      if (this.visualSegments.length > 0) {
-        const oldHeadSeg = this.visualSegments[0];
-        oldHeadSeg.prevX = oldHeadSeg.targetX;
-        oldHeadSeg.prevY = oldHeadSeg.targetY;
-        oldHeadSeg.scale = 1.0;
-        // Remove eyes from the old head mesh so only the active head has eyes
-        while (oldHeadSeg.mesh.children.length > 0) {
-          oldHeadSeg.mesh.remove(oldHeadSeg.mesh.children[0]);
+        this.snakeGroup.remove(departingTail.mesh);
+        if (departingTail.mesh.material && !(departingTail.mesh.material instanceof Array)) {
+          departingTail.mesh.material.dispose();
         }
       }
+    }
 
-      // Add new head segment
-      const newHeadMesh = new THREE.Mesh(this.segmentGeo, newHeadMat);
-      this.addEyesToHead(newHeadMesh);
-      this.snakeGroup.add(newHeadMesh);
-      this.visualSegments.unshift({
-        mesh: newHeadMesh,
-        prevX: head.x,
-        prevY: head.y,
-        targetX: newHead.x,
-        targetY: newHead.y,
-        scale: 1.0 // Make head size static (no pulsing scale animation)
+    while (this.visualSegments.length < this.snakeCoords.length) {
+      const idx = this.visualSegments.length;
+      const mat = this.snakeMaterials[idx] || newHeadMat;
+      const mesh = new THREE.Mesh(this.segmentGeo, mat);
+      this.snakeGroup.add(mesh);
+      this.visualSegments.push({
+        mesh: mesh,
+        prevX: this.snakeCoords[idx].x,
+        prevY: this.snakeCoords[idx].y,
+        targetX: this.snakeCoords[idx].x,
+        targetY: this.snakeCoords[idx].y,
+        scale: 1.0
       });
     }
+
+    // Direct 1-to-1 sync of positions, eyes, and materials
+    this.visualSegments.forEach((seg, index) => {
+      // Clean up any eyes (they will be added back only to index 0/head)
+      while (seg.mesh.children.length > 0) {
+        seg.mesh.remove(seg.mesh.children[0]);
+      }
+
+      // Update segment material to match the index gradient
+      if (this.snakeMaterials[index]) {
+        seg.mesh.material = this.snakeMaterials[index];
+      }
+
+      if (index === 0) {
+        this.addEyesToHead(seg.mesh);
+        // Head smoothly slides from previous head position to new head position
+        const prevHead = this.snakeCoords[1] || this.snakeCoords[0];
+        seg.prevX = prevHead.x;
+        seg.prevY = prevHead.y;
+        seg.targetX = this.snakeCoords[0].x;
+        seg.targetY = this.snakeCoords[0].y;
+      } else {
+        // Body segments stay static on their designated coordinate cells
+        seg.prevX = this.snakeCoords[index].x;
+        seg.prevY = this.snakeCoords[index].y;
+        seg.targetX = this.snakeCoords[index].x;
+        seg.targetY = this.snakeCoords[index].y;
+      }
+      seg.scale = 1.0;
+    });
   }
 
   private gameOver(): void {
     this.isPlaying = false;
     this.spawnGameOverShatter();
     if (this.eventBus) {
-      this.eventBus.emit('SNAKE_GAME:GAME_OVER' as any, { score: this.score });
+      this.eventBus.emit('SNAKE_GAME:GAME_OVER' as any, {
+        score: this.score,
+        snakeCoords: [...this.snakeCoords],
+        foodCoord: { ...this.foodCoord },
+        powerupCoord: this.powerupCoord ? { ...this.powerupCoord } : null,
+        currentPowerupType: this.currentPowerupType,
+        gridWidth: this.gridWidth,
+        gridHeight: this.gridHeight,
+      });
     }
   }
 
@@ -896,11 +843,6 @@ export class SnakeGameActor extends BaseActor {
     }
     this.snakeMaterials.forEach(m => m.dispose());
     this.visualSegments.forEach(seg => {
-      if (seg.mesh.material && !(seg.mesh.material instanceof Array)) {
-        seg.mesh.material.dispose();
-      }
-    });
-    this.shrinkingSegments.forEach(seg => {
       if (seg.mesh.material && !(seg.mesh.material instanceof Array)) {
         seg.mesh.material.dispose();
       }
@@ -994,7 +936,7 @@ export class SnakeGameActor extends BaseActor {
   }
 
   private spawnGameOverShatter(): void {
-    const segmentsToShatter = [...this.visualSegments, ...this.shrinkingSegments];
+    const segmentsToShatter = [...this.visualSegments];
     
     segmentsToShatter.forEach(seg => {
       seg.mesh.visible = false;
@@ -1053,9 +995,7 @@ export class SnakeGameActor extends BaseActor {
     });
 
     this.visualSegments.forEach(seg => this.snakeGroup.remove(seg.mesh));
-    this.shrinkingSegments.forEach(seg => this.snakeGroup.remove(seg.mesh));
     this.visualSegments = [];
-    this.shrinkingSegments = [];
   }
 
   private updateParticles(dt: number): void {

@@ -617,8 +617,7 @@ export class PortfolioScene implements Scene {
 
     // Listen to Snake Game Over trigger
     this.eventBus.on('SNAKE_GAME:GAME_OVER' as any, (payload: any) => {
-      const score = payload?.score || 0;
-      this.handleSnakeGameOver(score);
+      this.handleSnakeGameOver(payload);
     });
 
     // Listen to Camera Mode changes to cleanly stop driving game on experience exit
@@ -1949,7 +1948,7 @@ export class PortfolioScene implements Scene {
     }
   }
 
-  private stopSnakeGame(): void {
+  private stopSnakeGame(preserveActiveState: boolean = false): void {
     if (!this.cameraSystem) return;
 
     document.body.classList.remove('snake-game-active');
@@ -1967,7 +1966,9 @@ export class PortfolioScene implements Scene {
     this.snakeActor.mesh.visible = true;
 
     this.snakeGameActive = false;
-    this.cameraSystem.isSnakeGameActive = false;
+    if (!preserveActiveState) {
+      this.cameraSystem.isSnakeGameActive = false;
+    }
 
     // Robot drops back to the ground smoothly
     const robot = this.cameraSystem.getRobotCharacter();
@@ -2077,14 +2078,258 @@ export class PortfolioScene implements Scene {
     }, 5000);
   }
 
-  private handleSnakeGameOver(score: number): void {
+  private handleSnakeGameOver(payload: any): void {
+    const score = payload?.score || 0;
     this.showSnakeGameOverToast(score);
     // Delay stopping the snake game to allow the spectacular game over shatter particles to animate!
     setTimeout(() => {
       if (this.snakeGameActive) {
-        this.stopSnakeGame();
+        this.stopSnakeGame(true); // Preserve isSnakeGameActive to freeze character during prompt
+        this.showSnakeDownloadPrompt(payload);
       }
     }, 2000);
+  }
+
+  private showSnakeDownloadPrompt(payload: any): void {
+    const score = payload?.score || 0;
+    const uiLayer = document.getElementById('ui-layer') || document.body;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'snake-download-overlay';
+
+    overlay.innerHTML = `
+      <div class="snake-download-popup">
+        <div class="snake-download-popup__title">RUN RECORDED</div>
+        <div class="snake-download-popup__desc">
+          Telemetry decryption complete. Would you like to download a high-resolution top-down snapshot of your final grid positions?
+        </div>
+        <div class="snake-download-popup__score">${score.toString().padStart(5, '0')}</div>
+        <div class="snake-download-popup__actions">
+          <button id="snake-download-yes-btn" class="snake-download-popup__btn snake-download-popup__btn--primary">DOWNLOAD RUN</button>
+          <button id="snake-download-no-btn" class="snake-download-popup__btn snake-download-popup__btn--secondary">DISMISS</button>
+        </div>
+      </div>
+    `;
+
+    uiLayer.appendChild(overlay);
+
+    const downloadYesBtn = document.getElementById('snake-download-yes-btn');
+    const downloadNoBtn = document.getElementById('snake-download-no-btn');
+
+    const dismissPopup = () => {
+      overlay.classList.add('hidden');
+      if (this.cameraSystem) {
+        this.cameraSystem.isSnakeGameActive = false; // Safely unfreeze character on modal exit
+      }
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 300);
+    };
+
+    if (downloadYesBtn) {
+      downloadYesBtn.addEventListener('click', () => {
+        this.generateAndDownloadSnakeTelemetry(payload);
+        dismissPopup();
+      });
+    }
+
+    if (downloadNoBtn) {
+      downloadNoBtn.addEventListener('click', dismissPopup);
+    }
+  }
+
+  private generateAndDownloadSnakeTelemetry(payload: any): void {
+    const { score, snakeCoords, foodCoord, powerupCoord, currentPowerupType, gridWidth, gridHeight } = payload;
+
+    const canvas = document.createElement('canvas');
+    const boardSize = 500;
+    const headerHeight = 110;
+    canvas.width = boardSize + 40;
+    canvas.height = boardSize + headerHeight + 30;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 1. Solid background
+    ctx.fillStyle = '#0a0c16';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. Retro cybernetic grid borders/header area
+    ctx.fillStyle = '#07080e';
+    ctx.fillRect(10, 10, canvas.width - 20, headerHeight - 15);
+
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(10, 10, canvas.width - 20, headerHeight - 15);
+
+    ctx.fillStyle = '#39ff14';
+    ctx.font = 'bold 20px "Courier New", Courier, monospace';
+    ctx.fillText('▲ GAME SUMMARY', 25, 42);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '12px "Courier New", Courier, monospace';
+    ctx.fillText('GAME OVER', 25, 62);
+    ctx.fillText(`DATE: ${new Date().toLocaleString().toUpperCase()}`, 25, 80);
+    ctx.fillText(`GRID SIZE: ${gridWidth}x${gridHeight}`, 25, 98);
+
+    // Score Badge
+    ctx.fillStyle = '#111424';
+    ctx.fillRect(canvas.width - 190, 20, 170, 65);
+    ctx.strokeStyle = '#ff00aa';
+    ctx.strokeRect(canvas.width - 190, 20, 170, 65);
+
+    ctx.fillStyle = '#ff00aa';
+    ctx.font = 'bold 11px "Courier New", Courier, monospace';
+    ctx.fillText('FINAL RUN SCORE', canvas.width - 180, 36);
+
+    ctx.fillStyle = '#00ffff';
+    ctx.font = 'bold 28px monospace';
+    ctx.fillText(score.toString().padStart(5, '0'), canvas.width - 180, 68);
+
+    // 3. Draw Snake Grid
+    const boardX = 20;
+    const boardY = headerHeight + 10;
+    const cellPixelSize = boardSize / gridWidth;
+
+    ctx.fillStyle = '#050510';
+    ctx.fillRect(boardX, boardY, boardSize, boardSize);
+
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= gridWidth; i++) {
+      ctx.beginPath();
+      ctx.moveTo(boardX + i * cellPixelSize, boardY);
+      ctx.lineTo(boardX + i * cellPixelSize, boardY + boardSize);
+      ctx.stroke();
+    }
+    for (let j = 0; j <= gridHeight; j++) {
+      ctx.beginPath();
+      ctx.moveTo(boardX, boardY + j * cellPixelSize);
+      ctx.lineTo(boardX + boardSize, boardY + j * cellPixelSize);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#ff00aa';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(boardX, boardY, boardSize, boardSize);
+
+    // 4. Draw Food
+    if (foodCoord) {
+      const fx = boardX + foodCoord.x * cellPixelSize + cellPixelSize / 2;
+      const fy = boardY + foodCoord.y * cellPixelSize + cellPixelSize / 2;
+      const r = cellPixelSize * 0.38;
+
+      const foodGlow = ctx.createRadialGradient(fx, fy, r * 0.2, fx, fy, r * 2.5);
+      foodGlow.addColorStop(0, 'rgba(255, 0, 85, 1)');
+      foodGlow.addColorStop(0.3, 'rgba(255, 0, 85, 0.4)');
+      foodGlow.addColorStop(1, 'rgba(255, 0, 85, 0)');
+      ctx.fillStyle = foodGlow;
+      ctx.beginPath();
+      ctx.arc(fx, fy, r * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ff0055';
+      ctx.beginPath();
+      ctx.arc(fx, fy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 5. Draw Powerup
+    if (powerupCoord) {
+      const px = boardX + powerupCoord.x * cellPixelSize + cellPixelSize / 2;
+      const py = boardY + powerupCoord.y * cellPixelSize + cellPixelSize / 2;
+      const r = cellPixelSize * 0.38;
+
+      let pColor = '#ffeb3b';
+      if (currentPowerupType === 'slowmo') pColor = '#00ffff';
+      if (currentPowerupType === 'ghost') pColor = '#9c27b0';
+
+      const glow = ctx.createRadialGradient(px, py, r * 0.2, px, py, r * 2.5);
+      glow.addColorStop(0, pColor);
+      glow.addColorStop(0.3, pColor + '55');
+      glow.addColorStop(1, pColor + '00');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(px, py, r * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = pColor;
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 6. Draw Snake Body
+    if (snakeCoords && snakeCoords.length > 0) {
+      for (let i = snakeCoords.length - 1; i > 0; i--) {
+        const seg = snakeCoords[i];
+        const sx = boardX + seg.x * cellPixelSize;
+        const sy = boardY + seg.y * cellPixelSize;
+        const padding = cellPixelSize * 0.05;
+        const size = cellPixelSize - padding * 2;
+
+        const getSegmentColorHex = (idx: number) => {
+          const colorPool = [
+            '#1abc9c',
+            '#3498db',
+            '#9b59b6',
+            '#e91e63',
+            '#e74c3c',
+            '#e67e22',
+            '#f1c40f',
+          ];
+          return colorPool[(idx - 1) % colorPool.length];
+        };
+
+        ctx.fillStyle = getSegmentColorHex(i);
+        ctx.strokeStyle = '#050510';
+        ctx.lineWidth = 1;
+        ctx.fillRect(sx + padding, sy + padding, size, size);
+        ctx.strokeRect(sx + padding, sy + padding, size, size);
+      }
+
+      // Snake Head
+      const head = snakeCoords[0];
+      const hx = boardX + head.x * cellPixelSize;
+      const hy = boardY + head.y * cellPixelSize;
+      const hPadding = cellPixelSize * 0.05;
+      const hSize = cellPixelSize - hPadding * 2;
+
+      ctx.fillStyle = '#2ecc71';
+      ctx.fillRect(hx + hPadding, hy + hPadding, hSize, hSize);
+
+      // Eyes
+      const eyeRadius = cellPixelSize * 0.08;
+      const leftEyeX = hx + cellPixelSize * 0.3;
+      const leftEyeY = hy + cellPixelSize * 0.3;
+      const rightEyeX = hx + cellPixelSize * 0.7;
+      const rightEyeY = hy + cellPixelSize * 0.3;
+
+      ctx.fillStyle = '#00ffff';
+      ctx.beginPath();
+      ctx.arc(leftEyeX, leftEyeY, eyeRadius, 0, Math.PI * 2);
+      ctx.arc(rightEyeX, rightEyeY, eyeRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 7. Footer text
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.font = '9px "Courier New", Courier, monospace';
+    ctx.fillText('SNAKE GAME // ANSHDEEP SINGH PORTFOLIO WEBSITE', boardX, canvas.height - 9);
+
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `snake_game_${score}_score.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Failed to export snake run canvas telemetry:', err);
+    }
   }
 
   private relocateSnakeActor(): void {
